@@ -62,9 +62,11 @@ where
                     _ => unreachable!(),
                 }
             }
-            Event::SequenceStart(aid, _) => {
+            Event::SequenceStart(aid, tag) => {
                 self.doc_stack.push((
-                    Node::from_bare_yaml(Yaml::Array(Vec::new())).with_span(span),
+                    Node::from_bare_yaml(Yaml::Array(Vec::new()))
+                        .with_span(span)
+                        .with_tag(tag),
                     aid,
                 ));
             }
@@ -72,9 +74,11 @@ where
                 let node = self.doc_stack.pop().unwrap();
                 self.insert_new_node(node);
             }
-            Event::MappingStart(aid, _) => {
+            Event::MappingStart(aid, tag) => {
                 self.doc_stack.push((
-                    Node::from_bare_yaml(Yaml::Hash(Hash::new())).with_span(span),
+                    Node::from_bare_yaml(Yaml::Hash(Hash::new()))
+                        .with_span(span)
+                        .with_tag(tag),
                     aid,
                 ));
                 self.key_stack.push(Node::from_bare_yaml(Yaml::BadValue));
@@ -122,7 +126,10 @@ where
                     // Datatype is not specified, or unrecognized
                     Yaml::from_str(&v)
                 };
-                self.insert_new_node((Node::from_bare_yaml(node).with_span(span), aid));
+                self.insert_new_node((
+                    Node::from_bare_yaml(node).with_span(span).with_tag(tag),
+                    aid,
+                ));
             }
             Event::Alias(id) => {
                 let n = match self.anchor_map.get(&id) {
@@ -254,6 +261,13 @@ pub trait LoadableYamlNode: Clone + std::hash::Hash + Eq {
     #[inline]
     #[must_use]
     fn with_span(self, _: Span) -> Self {
+        self
+    }
+
+    /// Provide the tag for the node (builder-style).
+    #[inline]
+    #[must_use]
+    fn with_tag(self, _: Option<Tag>) -> Self {
         self
     }
 }

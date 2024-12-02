@@ -1,7 +1,7 @@
 #![allow(clippy::bool_assert_comparison)]
 #![allow(clippy::float_cmp)]
 
-use saphyr::{Yaml, YamlEmitter};
+use saphyr::{MarkedYaml, Yaml, YamlEmitter};
 
 #[test]
 fn test_api() {
@@ -232,4 +232,17 @@ fn test_integer_key() {
     let out = Yaml::load_from_str(s).unwrap();
     let first = out.into_iter().next().unwrap();
     assert_eq!(first[0]["important"].as_bool().unwrap(), true);
+}
+
+#[test]
+fn test_custom_tag() {
+    let s = "
+a: !<http://example.com> 1
+";
+    let out = MarkedYaml::load_from_str(s).unwrap();
+    let first = out.into_iter().next().unwrap();
+    assert_eq!(
+        first.data["a"].tag.as_ref().unwrap().suffix,
+        "http://example.com"
+    );
 }

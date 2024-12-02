@@ -3,7 +3,7 @@
 //! This is set aside so as to not clutter `annotated.rs`.
 
 use hashlink::LinkedHashMap;
-use saphyr_parser::{BufferedInput, Input, Parser, ScanError, Span};
+use saphyr_parser::{BufferedInput, Input, Parser, ScanError, Span, Tag};
 
 use crate::{LoadableYamlNode, Yaml, YamlData, YamlLoader};
 
@@ -20,6 +20,8 @@ pub struct MarkedYaml {
     pub span: Span,
     /// The YAML contents of the node.
     pub data: YamlData<MarkedYaml>,
+    /// The optional YAML tag of the node.
+    pub tag: Option<Tag>,
 }
 
 impl MarkedYaml {
@@ -82,6 +84,7 @@ impl From<YamlData<MarkedYaml>> for MarkedYaml {
     fn from(value: YamlData<MarkedYaml>) -> Self {
         Self {
             span: Span::default(),
+            tag: None,
             data: value,
         }
     }
@@ -90,6 +93,7 @@ impl From<YamlData<MarkedYaml>> for MarkedYaml {
 impl LoadableYamlNode for MarkedYaml {
     fn from_bare_yaml(yaml: Yaml) -> Self {
         Self {
+            tag: None,
             span: Span::default(),
             data: match yaml {
                 Yaml::Real(x) => YamlData::Real(x),
@@ -136,6 +140,7 @@ impl LoadableYamlNode for MarkedYaml {
 
     fn take(&mut self) -> Self {
         let mut taken_out = MarkedYaml {
+            tag: None,
             span: Span::default(),
             data: YamlData::BadValue,
         };
@@ -145,6 +150,11 @@ impl LoadableYamlNode for MarkedYaml {
 
     fn with_span(mut self, span: Span) -> Self {
         self.span = span;
+        self
+    }
+
+    fn with_tag(mut self, tag: Option<Tag>) -> Self {
+        self.tag = tag;
         self
     }
 }
